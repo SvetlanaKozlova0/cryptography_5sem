@@ -6,7 +6,7 @@ public class DESKeyExpander: IKeyExpander
 {
     private static readonly uint[] PermutedChoice1 =
     [
-        57 ,49, 41, 33, 25, 17, 9,
+        57, 49, 41, 33, 25, 17, 9,
         1, 58, 50, 42, 34, 26, 18,
         10, 2, 59, 51, 43, 35, 27,
         19, 11, 3, 60, 52, 44, 36,
@@ -30,48 +30,63 @@ public class DESKeyExpander: IKeyExpander
     
     private static readonly int[] Shifts =
     [
-        1, 1, 2, 2, 2,
-        2, 2, 2, 1, 2, 
-        2, 2, 2, 2, 2,
-        1
+        1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1
     ];
 
-    private byte[] GetC0()
+
+    private static int GetC0(byte[] key)
     {
-        throw new NotImplementedException();
+        int c = 0;
+        for (int i = 0; i < 3; i++)
+        {
+            c = (c << 8) | (key[i] & 0xff);
+        }
+        c = (c << 4) | ((key[3] & 0xf0) >> 4);
+        return c & 0x0fffffff;
     }
 
-    private byte[] GetD0()
+    private static int GetD0(byte[] key)
     {
-        throw new NotImplementedException();
+        int d = (key[3] & 0x0f);
+        for (int i = 4; i < 7; i++)
+        {
+            d = (d << 8) | (key[i] & 0xff);
+        }
+        return d &  0x0fffffff;
     }
 
-    void LeftShift(byte[] block, int shift)
+    private static int LeftShift(int value, int shift)
     {
-        throw new NotImplementedException();
+        return ((value << shift) | (value >> (28 - shift))) & 0x0fffffff;
     }
 
-    byte[] MergeCD(byte[] c, byte[] d)
+    private static byte[] MergeCD(int c, int d)
     {
-        throw new NotImplementedException();
+        long cd = (((long)c) << 28) | (uint)(d & 0x0fffffff);
+        byte[] merged = new byte[7];
+        for (int i = 0; i < 7; i++)
+        {
+            merged[i] = (byte)((cd >> ((6 - i) * 8)) & 0xff);
+        }
+        return merged;
     }
-
+    
     public byte[][] GenerateRoundKeys(byte[] inputKey)
     {
         byte[] permutedKey = BitFunctions.Permutation(inputKey, PermutedChoice1, false, false);
-        byte[] c = GetC0();
-        byte[] d = GetD0();
-
-        byte[][] resultKeys = new byte[16][];
-
+        
+        int c = GetC0(permutedKey);
+        int d = GetD0(permutedKey);
+        byte[][] roundKeys = new byte[16][];
         for (int i = 0; i < 16; i++)
         {
-            LeftShift(c, Shifts[i]);
-            LeftShift(d, Shifts[i]);
-            byte[] temp = MergeCD(c, d);
-            resultKeys[i] = BitFunctions.Permutation(temp, PermutedChoice2, false, false);
+            c = LeftShift(c, Shifts[i]);
+            d = LeftShift(d, Shifts[i]);
+            byte[] merged = MergeCD(c, d);
+            byte[] roundKey = BitFunctions.Permutation(merged, PermutedChoice2, false, false);
+            roundKeys[i] = roundKey;
         }
+        return roundKeys;
 
-        return resultKeys;
     }
 }
