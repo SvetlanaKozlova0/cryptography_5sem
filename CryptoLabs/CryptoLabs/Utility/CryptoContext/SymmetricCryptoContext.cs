@@ -31,12 +31,16 @@ public class SymmetricCryptoContext
 
     public void EncryptSync(byte[] input, ref byte[] output)
     {
-        throw new NotImplementedException();
+        byte[] padded = _padding.ApplyPadding(input, _cipherMode.BlockSize);
+        byte[] encrypted = _cipherMode.Encrypt(_symmetricCipher, padded, _iv);
+        output = encrypted;
     }
 
     public void DecryptSync(byte[] input, ref byte[] output)
     {
-        throw new NotImplementedException();
+        byte[] decrypted = _cipherMode.Decrypt(_symmetricCipher, input, _iv);
+        byte[] unpadded = _padding.RemovePadding(decrypted, _cipherMode.BlockSize);
+        output = unpadded;
     }
 
     public void EncryptAsync(byte[] input, ref byte[] output)
