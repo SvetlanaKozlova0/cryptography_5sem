@@ -198,8 +198,8 @@ public class PCBCMode : ICipherMode
             byte[] xored = BitFunctions.XorBlocks(decrypted, 
                 BitFunctions.XorBlocks(previousStart, previousEnd, BlockSize), BlockSize);
             Array.Copy(xored, 0, resultData, i, BlockSize);
-            Array.Copy(current, previousStart, BlockSize);
-            Array.Copy(decrypted, previousEnd, BlockSize);
+            Array.Copy(xored, previousStart, BlockSize);
+            Array.Copy(current, previousEnd, BlockSize);
         }
         return resultData;
     }

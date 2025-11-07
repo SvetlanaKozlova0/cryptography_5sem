@@ -35,6 +35,7 @@ public class SymmetricCryptoContext
         byte[] encrypted = _cipherMode.Encrypt(_symmetricCipher, padded, _iv);
         output = encrypted;
     }
+    
     public byte[] EncryptSync(byte[] input)
     {
         byte[] padded = _padding.ApplyPadding(input, _cipherMode.BlockSize);
@@ -48,6 +49,7 @@ public class SymmetricCryptoContext
         byte[] unpadded = _padding.RemovePadding(decrypted, _cipherMode.BlockSize);
         output = unpadded;
     }
+    
     public byte[] DecryptSync(byte[] input)
     {
         byte[] decrypted = _cipherMode.Decrypt(_symmetricCipher, input, _iv);
