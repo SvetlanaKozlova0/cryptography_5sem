@@ -36,6 +36,10 @@ public class DESKeyExpander: IKeyExpander
 
     private static int GetC0(byte[] key)
     {
+        if (key.Length < 4)
+        {
+            throw new ArgumentException($"Key must be at least 4 bytes for calculation C0, but got {key.Length}");
+        }
         int c = 0;
         for (int i = 0; i < 3; i++)
         {
@@ -47,6 +51,10 @@ public class DESKeyExpander: IKeyExpander
 
     private static int GetD0(byte[] key)
     {
+        if (key.Length < 7)
+        {
+            throw new ArgumentException($"Key must be at least 7 bytes for calculation D0, but got {key.Length}");
+        }
         int d = (key[3] & 0x0f);
         for (int i = 4; i < 7; i++)
         {
@@ -57,6 +65,10 @@ public class DESKeyExpander: IKeyExpander
 
     private static int LeftShift(int value, int shift)
     {
+        if (shift < 1 || shift > 2)
+        {
+            throw new ArgumentException($"Shift for DES key expansion must be between 1 and 2, but got {shift}");
+        }
         return ((value << shift) | (value >> (28 - shift))) & 0x0fffffff;
     }
 
@@ -73,6 +85,7 @@ public class DESKeyExpander: IKeyExpander
     
     public byte[][] GenerateRoundKeys(byte[] inputKey)
     {
+        ValidateInputKey(inputKey);
         byte[] permutedKey = BitFunctions.Permutation(inputKey, PermutedChoice1, false, false);
         
         int c = GetC0(permutedKey);
@@ -88,5 +101,13 @@ public class DESKeyExpander: IKeyExpander
         }
         return roundKeys;
 
+    }
+    
+    private static void ValidateInputKey(byte[] key)
+    {
+        if (key.Length != 8)
+        {
+            throw new ArgumentException($"DES key must be 8 bytes, but got {key.Length} bytes", nameof(key));
+        }
     }
 }

@@ -82,11 +82,17 @@ public class FeistelNetwork: IEncryptionRound
 
     byte[] ExpansionFunction(byte[] input)
     {
+        ValidateExpansionInput(input);
         return BitFunctions.Permutation(input, ExpansionTable, false, false);
     }
 
     private byte ExtractSixBits(byte[] input, int index)
     {
+        if (index < 0 || index >= 8)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index),
+                $"Index for extracting 6 bits must be between 0 and 7, but got {index}");
+        }
         int bitPos = index * 6;
         int byteIndex = bitPos / 8;
         int bitOffset = bitPos % 8;
@@ -110,6 +116,10 @@ public class FeistelNetwork: IEncryptionRound
 
     byte PerformOneSBlock(byte input, int index)
     {
+        if (index < 0 || index >= 8)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index), $"S-box index must be between 0 and 7, but  got {index}");
+        }
         int row = ((input & 0x20) >> 4) | (input & 0x01);
         int column = (input & 0x1E) >> 1;
         return SBoxes[index, row, column];
@@ -117,6 +127,11 @@ public class FeistelNetwork: IEncryptionRound
     
     byte[] PerformSBlocks(byte[] input)
     {
+        if (input.Length != 6)
+        {
+            throw new ArgumentOutOfRangeException(nameof(input),
+                $"S-box input must be 6 bytes, but got {input.Length}");
+        }
         byte[] result = new byte[4];
         for (int i = 0; i < 8; i++)
         {
@@ -137,6 +152,10 @@ public class FeistelNetwork: IEncryptionRound
     
     byte[] FeistelFunction(byte[] input, byte[] key)
     {
+        if (input.Length != 4)
+        {
+            throw new ArgumentException($"Feistel function input must be 4 bytes, but got {input.Length}");
+        }
         byte[] extended = ExpansionFunction(input);
         byte[] xored = BitXor(extended, key);
         byte[] sBoxed = PerformSBlocks(xored);
@@ -146,6 +165,11 @@ public class FeistelNetwork: IEncryptionRound
 
     byte[] BitXor(byte[] a, byte[] b)
     {
+        if (a.Length != b.Length)
+        {
+            throw new ArgumentException(
+                $"Lengths of blocks for bit xor must be the same, but got {a.Length}, {b.Length}");
+        }
         byte[] result = new byte[a.Length];
         for (int i = 0; i < a.Length; ++i)
         {
@@ -156,6 +180,7 @@ public class FeistelNetwork: IEncryptionRound
     
     public byte[] PerformEncryptConversion(byte[] inputBlock, byte[] roundKey)
     {
+        ValidateInput(inputBlock, roundKey);
         int halfSize = inputBlock.Length / 2;
         byte[] left = new byte[halfSize];
         byte[] right = new byte[halfSize];
@@ -173,5 +198,26 @@ public class FeistelNetwork: IEncryptionRound
             result[i + halfSize] = newRight[i];
         }
         return result;
+    }
+
+    private static void ValidateInput(byte[] input, byte[] roundKey)
+    {
+        if (input.Length != 8)
+        {
+            throw new ArgumentException($"Input block length for Feistel Network must be 8, but got {input.Length}");
+        }
+
+        if (roundKey.Length != 6)
+        {
+            throw new ArgumentException($"Round key length for Feistel Network must be 6, but got {roundKey.Length}");
+        }
+    }
+
+    private static void ValidateExpansionInput(byte[] input)
+    {
+        if (input.Length != 4)
+        {
+            throw new ArgumentException($"Expansion input for Feistel Network must be 4, but got {input.Length}");
+        }
     }
 }

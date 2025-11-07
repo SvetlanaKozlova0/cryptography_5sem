@@ -31,6 +31,7 @@ public class DESAlgorithm(byte[][] roundKeys): ISymmetricCipher
 
     public byte[] Encrypt(byte[] inputBlock)
     {
+        ValidateInputBlock(inputBlock);
         byte[] block = BitFunctions.Permutation(inputBlock, InitialPermutation, false, false);
 
         for (int i = 0; i < 16; i++)
@@ -46,6 +47,7 @@ public class DESAlgorithm(byte[][] roundKeys): ISymmetricCipher
 
     public byte[] Decrypt(byte[] inputBlock)
     {
+        ValidateInputBlock(inputBlock);
         byte[] block = BitFunctions.Permutation(inputBlock, InitialPermutation, false, false);
 
         for (int i = 0; i < 16; i++)
@@ -63,6 +65,31 @@ public class DESAlgorithm(byte[][] roundKeys): ISymmetricCipher
 
     public void SetRoundKeys(byte[][] roundKeys)
     {
+        ValidateRoundKeys(roundKeys);
         _roundKeys = roundKeys;
+    }
+
+    private static void ValidateInputBlock(byte[] block)
+    {
+        if (block.Length != 8)
+        {
+            throw new ArgumentException($"DES block must be 8 bytes, but got {block.Length} bytes", nameof(block));
+        }
+    }
+
+    private static void ValidateRoundKeys(byte[][] roundKeys)
+    {
+        if (roundKeys.Length != 16)
+        {
+            throw new ArgumentException($"DES round keys must have length 16, but got {roundKeys.Length}");
+        }
+
+        for (int i = 0; i < roundKeys.Length; i++)
+        {
+            if (roundKeys[i].Length != 6)
+            {
+                throw new ArgumentException($"DES round key must has length 6 bytes, but got {roundKeys[i].Length}");
+            }
+        }
     }
 }
