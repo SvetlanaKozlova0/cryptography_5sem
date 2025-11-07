@@ -35,12 +35,24 @@ public class SymmetricCryptoContext
         byte[] encrypted = _cipherMode.Encrypt(_symmetricCipher, padded, _iv);
         output = encrypted;
     }
+    public byte[] EncryptSync(byte[] input)
+    {
+        byte[] padded = _padding.ApplyPadding(input, _cipherMode.BlockSize);
+        byte[] encrypted = _cipherMode.Encrypt(_symmetricCipher, padded, _iv);
+        return encrypted;
+    }
 
     public void DecryptSync(byte[] input, ref byte[] output)
     {
         byte[] decrypted = _cipherMode.Decrypt(_symmetricCipher, input, _iv);
         byte[] unpadded = _padding.RemovePadding(decrypted, _cipherMode.BlockSize);
         output = unpadded;
+    }
+    public byte[] DecryptSync(byte[] input)
+    {
+        byte[] decrypted = _cipherMode.Decrypt(_symmetricCipher, input, _iv);
+        byte[] unpadded = _padding.RemovePadding(decrypted, _cipherMode.BlockSize);
+        return unpadded;
     }
 
     public void EncryptAsync(byte[] input, ref byte[] output)
