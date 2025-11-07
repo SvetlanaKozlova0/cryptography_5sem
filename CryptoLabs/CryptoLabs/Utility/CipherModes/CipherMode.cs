@@ -25,6 +25,10 @@ public class ECBMode : ICipherMode
 {
     public byte[] Encrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
         if (data.Length % BlockSize != 0)
         {
             throw new ArgumentException("Data must be multiple of BlockSize");
@@ -42,6 +46,10 @@ public class ECBMode : ICipherMode
 
     public byte[] Decrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
         byte[] resultData = new byte[data.Length];
         for (int i = 0; i < data.Length; i += BlockSize)
         {
@@ -60,6 +68,16 @@ public class CBCMode : ICipherMode
 {
     public byte[] Encrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
+
+        if (iv.Length != BlockSize)
+        {
+            throw new ArgumentException($"Initial vector must have size of BlockSize, but" +
+                                        $"got {iv.Length}, expected {BlockSize}");
+        }
         if (data.Length % BlockSize != 0)
         {
             throw new ArgumentException("Data must be multiple of BlockSize");
@@ -81,6 +99,16 @@ public class CBCMode : ICipherMode
 
     public byte[] Decrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
+
+        if (iv.Length != BlockSize)
+        {
+            throw new ArgumentException($"Initial vector must have size of BlockSize, but" +
+                                        $"got {iv.Length}, expected {BlockSize}");
+        }
         if (data.Length % BlockSize != 0)
         {
             throw new ArgumentException("Data must be multiple of BlockSize");
@@ -107,15 +135,20 @@ public class PCBCMode : ICipherMode
 {
     public byte[] Encrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
+
+        if (iv.Length != BlockSize)
+        {
+            throw new ArgumentException($"Initial vector must have size of BlockSize, but" +
+                                        $"got {iv.Length}, expected {BlockSize}");
+        }
         if (data.Length % BlockSize != 0)
         {
             throw new ArgumentException("Data must be multiple of BlockSize");
         }
-        if (iv.Length != BlockSize)
-        {
-            throw new ArgumentException($"IV must be {BlockSize} bytes");
-        }
-        
         byte[] resultData = new byte[data.Length];
         byte[] previousStart = new byte[BlockSize];
         Array.Copy(iv, previousStart, BlockSize);
@@ -138,13 +171,19 @@ public class PCBCMode : ICipherMode
 
     public byte[] Decrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
+
+        if (iv.Length != BlockSize)
+        {
+            throw new ArgumentException($"Initial vector must have size of BlockSize, but" +
+                                        $"got {iv.Length}, expected {BlockSize}");
+        }
         if (data.Length % BlockSize != 0)
         {
             throw new ArgumentException("Data must be multiple of BlockSize");
-        }
-        if (iv.Length != BlockSize)
-        {
-            throw new ArgumentException($"IV must be {BlockSize} bytes");
         }
         byte[] resultData = new byte[data.Length];
         byte[] previousStart = new byte[BlockSize];
@@ -172,13 +211,19 @@ public class CFBMode : ICipherMode
 {
     public byte[] Encrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
+
+        if (iv.Length != BlockSize)
+        {
+            throw new ArgumentException($"Initial vector must have size of BlockSize, but" +
+                                        $"got {iv.Length}, expected {BlockSize}");
+        }
         if (data.Length % BlockSize != 0)
         {
             throw new ArgumentException("Data must be multiple of BlockSize");
-        }
-        if (iv.Length != BlockSize)
-        {
-            throw new ArgumentException($"IV must be {BlockSize} bytes");
         }
         byte[] resultData = new byte[data.Length];
         byte[] plainText = new byte[BlockSize];
@@ -198,13 +243,19 @@ public class CFBMode : ICipherMode
 
     public byte[] Decrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
+
+        if (iv.Length != BlockSize)
+        {
+            throw new ArgumentException($"Initial vector must have size of BlockSize, but" +
+                                        $"got {iv.Length}, expected {BlockSize}");
+        }
         if (data.Length % BlockSize != 0)
         {
             throw new ArgumentException("Data must be multiple of BlockSize");
-        }
-        if (iv.Length != BlockSize)
-        {
-            throw new ArgumentException($"IV must be {BlockSize} bytes");
         }
         byte[] resultData = new byte[data.Length];
         byte[] plainText = new byte[BlockSize];
@@ -229,13 +280,19 @@ public class OFBMode : ICipherMode
 {
     public byte[] Encrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
+
+        if (iv.Length != BlockSize)
+        {
+            throw new ArgumentException($"Initial vector must have size of BlockSize, but" +
+                                        $"got {iv.Length}, expected {BlockSize}");
+        }
         if (data.Length % BlockSize != 0)
         {
             throw new ArgumentException("Data must be multiple of BlockSize");
-        }
-        if (iv.Length != BlockSize)
-        {
-            throw new ArgumentException($"IV must be {BlockSize} bytes");
         }
         byte[] resultData = new byte[data.Length];
         byte[] plainText = new byte[BlockSize];
@@ -275,13 +332,19 @@ public class CTRMode : ICipherMode
     }
     public byte[] Encrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
+
+        if (iv.Length != BlockSize)
+        {
+            throw new ArgumentException($"Initial vector must have size of BlockSize, but" +
+                                        $"got {iv.Length}, expected {BlockSize}");
+        }
         if (data.Length % BlockSize != 0)
         {
             throw new ArgumentException("Data must be multiple of BlockSize");
-        }
-        if (iv.Length != BlockSize)
-        {
-            throw new ArgumentException($"IV must be {BlockSize} bytes");
         }
         byte[] resultData = new byte[data.Length];
         byte[] counter = new byte[BlockSize];
@@ -317,6 +380,10 @@ public class RandomDeltaMode : ICipherMode
     public List<byte[]> Deltas { get; } = new List<byte[]>();
     public byte[] Encrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
         if (data.Length % BlockSize != 0)
         {
             throw new ArgumentException("Data must be multiple of BlockSize");
@@ -340,9 +407,23 @@ public class RandomDeltaMode : ICipherMode
 
     public byte[] Decrypt(ISymmetricCipher cipher, byte[] data, byte[] iv)
     {
+        if (data.Length == 0)
+        {
+            throw new ArgumentException("Data cannot be empty", nameof(data));
+        }
         if (data.Length % BlockSize != 0)
         {
             throw new ArgumentException("Data must be multiple of BlockSize");
+        }
+
+        if (Deltas.Count == 0)
+        {
+            throw new ArgumentException("Delta cannot be empty");
+        }
+
+        if (Deltas.Count < data.Length / BlockSize)
+        {
+            throw new ArgumentException("Not enough deltas for decryption");
         }
         byte[] resultData = new byte[data.Length];
         for (int i = 0; i < data.Length; i += BlockSize)
@@ -373,7 +454,8 @@ public static class CipherModeFactory
             CipherMode.CFB => new CFBMode(),
             CipherMode.OFB => new OFBMode(),
             CipherMode.CTR => new CTRMode(),
-            CipherMode.RandomDelta => new RandomDeltaMode()
+            CipherMode.RandomDelta => new RandomDeltaMode(),
+            _ => throw new ArgumentException($"Unsupported cipher mode: {mode}", nameof(mode))
         };
     }
 }

@@ -19,6 +19,10 @@ public class ZerosPadding : IPadding
 {
     public byte[] ApplyPadding(byte[] block, int blockSize)
     {
+        if (blockSize < 0 || blockSize > 256)
+        {
+            throw new ArgumentException($"Size of block must be between 0 and 256, but got {blockSize}");
+        }
         if (block.Length % blockSize == 0)
         {
             return block;
@@ -32,6 +36,10 @@ public class ZerosPadding : IPadding
 
     public byte[] RemovePadding(byte[] block, int blockSize)
     {
+        if (blockSize < 0 || blockSize > 256)
+        {
+            throw new ArgumentException($"Size of block must be between 0 and 256, but got {blockSize}");
+        }
         if (block.Length == 0)
         {
             return block;
@@ -63,6 +71,10 @@ public class ANSIx923Padding : IPadding
 {
     public byte[] ApplyPadding(byte[] block, int blockSize)
     {
+        if (blockSize < 0 || blockSize > 256)
+        {
+            throw new ArgumentException($"Size of block must be between 0 and 256, but got {blockSize}");
+        }
         int bytesToAdd = blockSize - (block.Length % blockSize);
         if (bytesToAdd == 0)
         {
@@ -76,22 +88,26 @@ public class ANSIx923Padding : IPadding
 
     public byte[] RemovePadding(byte[] block, int blockSize)
     {
+        if (blockSize < 0 || blockSize > 256)
+        {
+            throw new ArgumentException($"Size of block must be between 0 and 256, but got {blockSize}");
+        }
         if (block.Length == 0)
         {
             return block;
         }
 
         byte paddingSize = block[block.Length - 1];
-        if (paddingSize == 0 || paddingSize > blockSize)
+        if (paddingSize == 0 || paddingSize > blockSize || paddingSize > block.Length)
         {
-            return block;
+            throw new ArgumentException($"Invalid padding size: {paddingSize}");
         }
 
         for (int i = block.Length - paddingSize; i < block.Length - 1; i++)
         {
             if (block[i] != 0)
             {
-                return block;
+                throw new ArgumentException("Non-zero byte found in ANSI X9.23 padding");
             }
         }
 
@@ -106,10 +122,19 @@ public class PKCS7Padding : IPadding
 {
     public byte[] ApplyPadding(byte[] block, int blockSize)
     {
+        if (blockSize < 0 || blockSize > 256)
+        {
+            throw new ArgumentException($"Size of block must be between 0 and 256, but got {blockSize}");
+        }
         int bytesToAdd = blockSize - (block.Length % blockSize);
         if (bytesToAdd == 0)
         {
             bytesToAdd = blockSize;
+        }
+
+        if (bytesToAdd > 256)
+        {
+            throw new ArgumentException($"To large bytes to add: {bytesToAdd}");
         }
         byte[] result = new byte[block.Length + bytesToAdd];
         Array.Copy(block, result, block.Length);
@@ -123,6 +148,10 @@ public class PKCS7Padding : IPadding
 
     public byte[] RemovePadding(byte[] block, int blockSize)
     {
+        if (blockSize < 0 || blockSize > 256)
+        {
+            throw new ArgumentException($"Size of block must be between 0 and 256, but got {blockSize}");
+        }
         if (block.Length == 0)
         {
             return block;
@@ -130,16 +159,14 @@ public class PKCS7Padding : IPadding
         byte paddingSize = block[block.Length - 1];
         if (paddingSize == 0 || paddingSize > blockSize || paddingSize > block.Length)
         {
-            //maybe add an exception
-            return block;
+            throw new ArgumentException($"Invalid padding size: {paddingSize}");
         }
 
         for (int i = block.Length - paddingSize; i < block.Length; i++)
         {
             if (block[i] != paddingSize)
             {
-                //maybe add an exception
-                return block;
+                throw new ArgumentException($"Invalid data: got {block[i]}, expected {paddingSize}");
             }
         }
         byte[] result = new byte[block.Length - paddingSize];
@@ -154,10 +181,19 @@ public class ISO10126Padding : IPadding
     private readonly Random _random = new Random();
     public byte[] ApplyPadding(byte[] block, int blockSize)
     {
+        if (blockSize < 0 || blockSize > 256)
+        {
+            throw new ArgumentException($"Size of block must be between 0 and 256, but got {blockSize}");
+        }
         int bytesToAdd = blockSize - (block.Length % blockSize);
         if (bytesToAdd == 0)
         {
             bytesToAdd = blockSize;
+        }
+
+        if (bytesToAdd > 256)
+        {
+            throw new ArgumentException($"Too large bytes to add: {bytesToAdd}");
         }
         byte[] result = new byte[block.Length + bytesToAdd];
         Array.Copy(block, result, block.Length);
@@ -171,6 +207,10 @@ public class ISO10126Padding : IPadding
 
     public byte[] RemovePadding(byte[] block, int blockSize)
     {
+        if (blockSize < 0 || blockSize > 256)
+        {
+            throw new ArgumentException($"Size of block must be between 0 and 256, but got {blockSize}");
+        }
         if (block.Length == 0)
         {
             return block;
@@ -179,7 +219,7 @@ public class ISO10126Padding : IPadding
         byte paddingSize = block[block.Length - 1];
         if (paddingSize < 1 || paddingSize > blockSize)
         {
-            return block;
+            throw new ArgumentException($"Invalid padding size: {paddingSize}");
         }
 
         byte[] result = new byte[block.Length - paddingSize];
@@ -198,7 +238,8 @@ public static class PaddingFactory
             PaddingMode.Zeros => new ZerosPadding(),
             PaddingMode.ANSI_X923 => new ANSIx923Padding(),
             PaddingMode.PKCS7 => new PKCS7Padding(),
-            PaddingMode.ISO10126 => new ISO10126Padding()
+            PaddingMode.ISO10126 => new ISO10126Padding(),
+            _ => throw new ArgumentException($"Unsupported padding mode: {mode}", nameof(mode))
         };
     }
 }
