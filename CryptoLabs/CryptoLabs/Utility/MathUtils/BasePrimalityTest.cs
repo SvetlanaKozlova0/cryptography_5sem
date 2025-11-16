@@ -7,7 +7,7 @@ public abstract class BasePrimalityTest: IPrimalityTest
 {
     public bool Perform(BigInteger testedValue, double minProbability)
     {
-        if (testedValue < 2)
+        if (testedValue < 2 || testedValue.IsEven)
         {
             return false;
         }
@@ -15,14 +15,10 @@ public abstract class BasePrimalityTest: IPrimalityTest
         if (testedValue == 2)
         {
             return true;
-        }
-
-        if (testedValue.IsEven)
-        {
-            return false;
-        }
-
+        } 
+        
         int countIterations = CalculateNumberIterations(minProbability);
+        
         for (int i = 0; i < countIterations; i++)
         {
             if (!PerformIteration(testedValue))
@@ -35,23 +31,32 @@ public abstract class BasePrimalityTest: IPrimalityTest
 
     protected virtual int CalculateNumberIterations(double minProbability)
     {
-        throw new NotImplementedException();
+        int k = 1;
+        
+        while (CalculateProbability(k) < minProbability)
+        {
+            k++;
+        }
+
+        return k;
     }
     
     protected abstract bool PerformIteration(BigInteger n);
 
-    protected abstract double CalculateProbability(int n);
+    protected abstract double CalculateProbability(int k);
     
     public static BigInteger GenerateRandomNumber(BigInteger n)
     {
         Random random = new Random();
         byte[] bytes = n.ToByteArray();
         BigInteger result;
+        
         do
         {
             random.NextBytes(bytes);
-            bytes[bytes.Length - 1] &= 0x7F;
+            bytes[^1] &= 0x7F;
             result = new BigInteger(bytes);
+            
         } while (result >= n || result < 2);
 
         return result;
@@ -66,14 +71,18 @@ public class MillerRabinTest: BasePrimalityTest
         BigInteger s = 0;
         BigInteger t = 0;
         BigInteger m = n - 1;
+        
         while (m % 2 == 0)
         {
             s += 1;
             m /= 2;
         }
+        
         t = m;
+        
         BigInteger a = GenerateRandomNumber(n - 1);
         BigInteger x = NumberTheoryFunctions.ModPow(a, t, n);
+        
         if (x == 1 || x == n - 1)
         {
             return false;
@@ -82,6 +91,7 @@ public class MillerRabinTest: BasePrimalityTest
         for (int j = 0; j < s - 1; j++)
         {
             x = NumberTheoryFunctions.ModPow(x, 2, n);
+            
             if (x == 1)
             {
                 return false;
@@ -95,9 +105,14 @@ public class MillerRabinTest: BasePrimalityTest
         return true;
     }
 
-    protected override double CalculateProbability(int n)
+    protected override double CalculateProbability(int k)
     {
-        throw new NotImplementedException();
+        return 1 - 1 / Math.Pow(4, k);
+    }
+
+    protected override int CalculateNumberIterations(double minProbability)
+    {
+        return (int)Math.Ceiling(Math.Log(1 - minProbability) / Math.Log(0.25));
     }
 }
 
@@ -112,17 +127,18 @@ public class SolovayStrassenTest : BasePrimalityTest
             return false;
         }
 
-        if (NumberTheoryFunctions.ModPow(a, (n - 1) / 2, n) !=
-            NumberTheoryFunctions.JacobiSymbol(a, n))
-        {
-            return false;
-        }
-        return true;
+        return NumberTheoryFunctions.ModPow(a, (n - 1) / 2, n) ==
+               NumberTheoryFunctions.JacobiSymbol(a, n);
     }
 
-    protected override double CalculateProbability(int n)
+    protected override double CalculateProbability(int k)
     {
-        throw new NotImplementedException();
+        return 1 - 1 / Math.Pow(2, k);
+    }
+
+    protected override int CalculateNumberIterations(double minProbability)
+    {
+        return (int)Math.Ceiling(Math.Log(1 - minProbability) / Math.Log(0.5));
     }
 }
 
@@ -136,17 +152,16 @@ public class FermatTest : BasePrimalityTest
         {
             return false;
         }
-
-        if (NumberTheoryFunctions.ModPow(a, n - 1, n) != 1)
-        {
-            return false;
-        }
-        return true;
+        return NumberTheoryFunctions.ModPow(a, n - 1, n) == 1;
     }
 
-    protected override double CalculateProbability(int n)
+    protected override double CalculateProbability(int k)
     {
-        return 1 - 1 / Math.Pow(2, n);
-        throw new NotImplementedException();
+        return 1 - 1 / Math.Pow(2, k);
+    }
+
+    protected override int CalculateNumberIterations(double minProbability)
+    {
+        return (int)Math.Ceiling(Math.Log(1 - minProbability) / Math.Log(0.5));
     }
 }
