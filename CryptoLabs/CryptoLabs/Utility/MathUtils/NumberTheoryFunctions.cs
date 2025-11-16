@@ -1,8 +1,8 @@
 namespace CryptoLabs.Utility.MathUtils;
-
+using System.Numerics;
 public class NumberTheoryFunctions
 {
-    public static int LegendreSymbol(long a, long p)
+    public static int LegendreSymbol(BigInteger a, BigInteger p)
     {
         if (p <= 2 || p % 2 == 0)
         {
@@ -19,7 +19,7 @@ public class NumberTheoryFunctions
         return ModPow(a, (p - 1) / 2, p) == 1 ? 1 : -1;
     }
 
-    public static int JacobiSymbol(long a, long b)
+    public static int JacobiSymbol(BigInteger a, BigInteger b)
     {
         if (b <= 0 || b % 2 == 0)
         {
@@ -66,7 +66,7 @@ public class NumberTheoryFunctions
         return b == 1 ? r : 0;
     }
     
-    public static long EuclideanAlgorithm(long a, long b)
+    public static BigInteger EuclideanAlgorithm(BigInteger a, BigInteger b)
     {
         a = a >= 0 ? a : -a;
         b = b >= 0 ? b : -b;
@@ -77,15 +77,15 @@ public class NumberTheoryFunctions
         return a;
     }
 
-    public static void BezoutIdentity(long a, long b, out long coefficientS, out long coefficientT)
+    public static void BezoutIdentity(BigInteger a, BigInteger b, out BigInteger coefficientS, out BigInteger coefficientT)
     {
-        long prevR = a, r = b;
-        long prevS = 1, s = 0;
-        long prevT = 0, t = 1;
+        BigInteger prevR = a, r = b;
+        BigInteger prevS = 1, s = 0;
+        BigInteger prevT = 0, t = 1;
         
         while (r != 0)
         {
-            long quotient = prevR / r;
+            BigInteger quotient = prevR / r;
             (prevR, r) = (r, prevR - quotient * r);
             (prevS, s) = (s, prevS - quotient * s);
             (prevT, t) = (t, prevT - quotient * t);
@@ -95,7 +95,7 @@ public class NumberTheoryFunctions
         coefficientT = prevT;
     }
 
-    public static long ModPow(long number, long exp, long modulus)
+    public static BigInteger ModPow(BigInteger number, BigInteger exp, BigInteger modulus)
     {
         if (modulus <= 0)
         {
@@ -106,7 +106,7 @@ public class NumberTheoryFunctions
             throw new ArgumentException("exp must be greater than 0");
         }
         
-        long result = 1;
+        BigInteger result = 1;
         
         while (exp > 0)
         {
