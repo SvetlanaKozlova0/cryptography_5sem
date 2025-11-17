@@ -1,4 +1,5 @@
 using System.Numerics;
+using CryptoLabs.RSA;
 using CryptoLabs.Utility.Interfaces;
 
 namespace CryptoLabs.Utility.MathUtils;
@@ -45,7 +46,7 @@ public abstract class BasePrimalityTest: IPrimalityTest
 
     protected abstract double CalculateProbability(int k);
     
-    public static BigInteger GenerateRandomNumber(BigInteger n)
+    public static BigInteger GenerateRandomTo(BigInteger n)
     {
         Random random = new Random();
         byte[] bytes = n.ToByteArray();
@@ -80,7 +81,7 @@ public class MillerRabinTest: BasePrimalityTest
         
         t = m;
         
-        BigInteger a = GenerateRandomNumber(n - 1);
+        BigInteger a = GenerateRandomTo(n - 1);
         BigInteger x = NumberTheoryFunctions.ModPow(a, t, n);
         
         if (x == 1 || x == n - 1)
@@ -121,7 +122,7 @@ public class SolovayStrassenTest : BasePrimalityTest
 {
     protected override bool PerformIteration(BigInteger n)
     {
-        BigInteger a = GenerateRandomNumber(n);
+        BigInteger a = GenerateRandomTo(n);
         if (NumberTheoryFunctions.EuclideanAlgorithm(a, n) != 1)
         {
             return false;
@@ -147,7 +148,7 @@ public class FermatTest : BasePrimalityTest
 {
     protected override bool PerformIteration(BigInteger n)
     {
-        BigInteger a = GenerateRandomNumber(n);
+        BigInteger a = GenerateRandomTo(n);
         if (NumberTheoryFunctions.EuclideanAlgorithm(a, n) != 1)
         {
             return false;
@@ -163,5 +164,19 @@ public class FermatTest : BasePrimalityTest
     protected override int CalculateNumberIterations(double minProbability)
     {
         return (int)Math.Ceiling(Math.Log(1 - minProbability) / Math.Log(0.5));
+    }
+}
+
+public static class PrimalityTestFactory
+{
+    public static BasePrimalityTest Create(RSACipherService.PrimalityTestType testType)
+    {
+        return testType switch
+        {
+            RSACipherService.PrimalityTestType.Fermat => new FermatTest(),
+            RSACipherService.PrimalityTestType.MillerRabin => new MillerRabinTest(),
+            RSACipherService.PrimalityTestType.SolovayStrassen => new SolovayStrassenTest(),
+            _ => throw new ArgumentException($"Unsupported primality test type {testType}")
+        };
     }
 }
