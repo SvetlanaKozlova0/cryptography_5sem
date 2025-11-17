@@ -1,134 +1,187 @@
 using CryptoLabs.Utility.MathUtils;
+using System.Numerics;
 
 namespace CryptoLabs.RSA;
-using System.Numerics;
-public class RSACipherService(RSACipherService.PrimalityTestType testType, double minProbability, int bitLength)
+
+
+public class RSACipherService(
+    RSACipherService.PrimalityTestType testType,
+    double minProbability,
+    int bitLength)
 {
+    
     public enum PrimalityTestType
     {
         MillerRabin,
         SolovayStrassen,
         Fermat
     };
-
+    
+    private static readonly BigInteger[] CommonExponents = [65537, 17, 3, 257];
+    
+    
     private readonly RSAKeyGenerator _keyGenerator = new RSAKeyGenerator(testType, minProbability, bitLength);
     
 
-    byte[] Encrypt(byte[] input, RSAPublicKey key)
+    public byte[] Encrypt(byte[] input, RSAPublicKey key)
     {
-        BigInteger exponent = key.E;
-        BigInteger n = key.N;
-        BigInteger message = new (input);
-        BigInteger result = NumberTheoryFunctions.ModPow(message, exponent, n);
-        byte[] output = result.ToByteArray();
+        BigInteger message = new (input, isUnsigned: true);
+        
+        if (message >= key.N)
+        {
+            throw new ArgumentException("Message is too big for this generated modulus.");
+        }
+        
+        var result = NumberTheoryFunctions.ModPow(message, key.E, key.N);
+        var output = result.ToByteArray(isUnsigned: true);
         return output;
     }
 
-    byte[] Decrypt(byte[] input, RSAPrivateKey key)
+    public byte[] Decrypt(byte[] input, RSAPrivateKey key)
     {
-        BigInteger exponent = key.D;
-        BigInteger n = key.N;
-        BigInteger message = new(input);
-        BigInteger result = NumberTheoryFunctions.ModPow(message, exponent, n);
-        byte[] output = result.ToByteArray();
+        BigInteger message = new(input, isUnsigned: true);
+        
+        if (message >= key.N)
+        {
+            throw new ArgumentException("Message is too big for this generated modulus. You can try to increase bit length.");
+        }
+        
+        var result = NumberTheoryFunctions.ModPow(message, key.D, key.N);
+        var output = result.ToByteArray(isUnsigned: true);
         return output;
     }
 
-    RSAKeyPair GenerateKeyPair()
+    public RSAKeyPair GenerateKeyPair()
     {
         return _keyGenerator.GenerateRSAKeyPair();
     }
+    
 
     private class RSAKeyGenerator(PrimalityTestType testType, double minProbability, int bitLength)
     {
         
         internal RSAKeyPair GenerateRSAKeyPair()
         {
-            BigInteger p = GenerateRandomPrimeNumber();
-            BigInteger q = GenerateRandomPrimeNumber();
-            BigInteger n = p * q;
-            BigInteger phi = (p - 1) * (q - 1);
-            BigInteger e = GeneratePublicExponent(phi, 65537);
-            BigInteger d = GeneratePrivateExponent(phi, e);
-            RSAPublicKey publicKey = new RSAPublicKey(e, n);
-            RSAPrivateKey privateKey = new RSAPrivateKey(d, n);
-            return new RSAKeyPair(publicKey, privateKey);
-        }
-
-        private BigInteger GeneratePublicExponent(BigInteger phi, BigInteger e)
-        {
-            while (NumberTheoryFunctions.EuclideanAlgorithm(phi, e) != 1)
+            BigInteger p, q;
+            do
             {
-                e = NextPrime(e);
-            }
+                p = GenerateRandomPrimeNumber();
+                q = GenerateRandomPrimeNumber();
+                
+            } while (p == q);
 
-            return e;
+            var n = p * q;
+            var phi = (p - 1) * (q - 1);
+                
+            var e = GeneratePublicExponent(phi, 65537);
+            var d = GeneratePrivateExponent(phi, e);
+            
+            return new RSAKeyPair(new RSAPublicKey(e, n), new RSAPrivateKey(d, n));
         }
 
-        private BigInteger GeneratePrivateExponent(BigInteger phi, BigInteger e)
+
+        private static BigInteger GeneratePublicExponent(BigInteger phi, BigInteger defaultExponent)
         {
-            NumberTheoryFunctions.BezoutIdentity(e, phi, out BigInteger d, out _);
+            
+            foreach (var e in CommonExponents)
+            {
+                if (e < phi && NumberTheoryFunctions.EuclideanAlgorithm(phi, e) == 1)
+                {
+                    return e;
+                }
+            }
+        
+            var candidate = defaultExponent;
+            for (var i = 0; i < 100 && candidate < phi; i++)
+            {
+                if (candidate > 1 && NumberTheoryFunctions.EuclideanAlgorithm(phi, candidate) == 1)
+                {
+                    return candidate;
+                }
+                
+                candidate += 2;
+                
+                if (candidate > phi / 2) 
+                    break;
+            }
+        
+            throw new InvalidOperationException("Can't generate a public exponent (too many iterations).");
+        }
+
+        
+        private static BigInteger GeneratePrivateExponent(BigInteger phi, BigInteger e)
+        {
+            NumberTheoryFunctions.BezoutIdentity(e, phi, out var d, out _);
             d %= phi;
-            if (d < 0)
+            while (d < 0)
             {
                 d += phi;
             }
             return d;
         }
 
-        private BigInteger NextPrime(BigInteger number)
-        {
-            number += 2;
-            while (!IsPrime(number))
-            {
-                number += 2;
-            }
-
-            return number;
-        }
-
-        private bool IsPrime(BigInteger number)
-        {
-            BasePrimalityTest test = testType switch
-            {
-                PrimalityTestType.Fermat => new FermatTest(),
-                PrimalityTestType.MillerRabin => new MillerRabinTest(),
-                PrimalityTestType.SolovayStrassen => new SolovayStrassenTest(),
-                _ => throw new InvalidOperationException("Unknown primality test type"),
-            };
-            return test.Perform(number, minProbability);
-        }
         
         private BigInteger GenerateRandomPrimeNumber()
         {
-            BasePrimalityTest test = testType switch
-            {
-                PrimalityTestType.Fermat => new FermatTest(),
-                PrimalityTestType.MillerRabin => new MillerRabinTest(),
-                PrimalityTestType.SolovayStrassen => new SolovayStrassenTest(),
-                _ => throw new InvalidOperationException("Unknown primality test type"),
-            };
+            var test = PrimalityTestFactory.Create(testType);
+            var number = 0;
+            var maxNumber = GetMaxIterations();
             while (true)
             {
-                BigInteger candidate = BasePrimalityTest.GenerateRandomNumber(bitLength / 2);
+                var candidate = GenerateRandomByLen(bitLength / 2 - 1);
                 if (test.Perform(candidate, minProbability))
                 {
-                    // добавить необходимые проверки для защиты от атак
                     return candidate;
                 }
 
-                candidate += 2;
-                if (candidate.GetBitLength() > bitLength / 2 + 10)
+                number++;
+                if (number > maxNumber)
                 {
-                    candidate = BasePrimalityTest.GenerateRandomNumber(bitLength / 2);
-                    return candidate;
+                    throw new InvalidOperationException($"Can't generate a random number (too many iterations).");
                 }
             }
+        }
+
+        
+        private static BigInteger GenerateRandomByLen(int bitLength)
+        {
+            if (bitLength <= 0)
+            {
+                throw new ArgumentException($"Bit length must be positive, but got {bitLength}.", nameof(bitLength));
+            }
+
+            var random = new Random();
+            var data = new byte[(bitLength + 7) / 8];
             
+            random.NextBytes(data);
+    
+            if (bitLength % 8 == 0)
+            {
+                data[0] |= 0x80;
+            }
+    
+            var result = new BigInteger(data);
+    
+            result = BigInteger.Abs(result);
+    
+            var mask = (BigInteger.One << bitLength) - 1;
+            return result & mask;
+        }
+        
+        private int GetMaxIterations()
+        {
+            return bitLength switch
+            {
+                <= 256 => 300,
+                <= 384 => 500,
+                <= 512 => 800,
+                <= 1024 => 2000,
+                _ => 5000
+            };
         }
     }
-
 }
+
 
 public class RSAPublicKey(BigInteger e, BigInteger n)
 {
@@ -146,6 +199,6 @@ public class RSAPrivateKey(BigInteger d, BigInteger n)
 
 public class RSAKeyPair(RSAPublicKey publicKey, RSAPrivateKey privateKey)
 {
-    public RSAPublicKey PublicKey = publicKey;
-    public RSAPrivateKey PrivateKey = privateKey;
+    public readonly RSAPublicKey PublicKey = publicKey;
+    public readonly RSAPrivateKey PrivateKey = privateKey;
 }
