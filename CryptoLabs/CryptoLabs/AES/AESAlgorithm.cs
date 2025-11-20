@@ -8,11 +8,11 @@ namespace CryptoLabs.AES;
 
 public class AESAlgorithm: ISymmetricCipher
 {
-    private int nb = 4;
+    private const int Nb = 4;
     private byte[][] _roundKeys;
     
-    AESBoxGenerator _box;
-    AESPoly polynomials = new();
+    private readonly AESBoxGenerator _box;
+    private readonly AESPoly _polynomials = new();
     
 
     public AESAlgorithm(AESBoxGenerator aesBoxGenerator)
@@ -118,9 +118,9 @@ public class AESAlgorithm: ISymmetricCipher
         Array.Copy(block, temp, block.Length);
         for (var r = 1; r < 4; r++)
         {
-            for (var c = 0; c < nb; c++)
+            for (var c = 0; c < Nb; c++)
             {
-                var pos = (c - r + nb) % nb;
+                var pos = (c - r + Nb) % Nb;
                 block[r + 4 * pos] = (byte)(temp[r + 4 * c] & 0xFF);
             }
         }
@@ -133,9 +133,9 @@ public class AESAlgorithm: ISymmetricCipher
         Array.Copy(block, temp, block.Length);
         for (var r = 1; r < 4; r++)
         {
-            for (var c = 0; c < nb; c++)
+            for (var c = 0; c < Nb; c++)
             {
-                var pos = (c + r) % nb;
+                var pos = (c + r) % Nb;
                 block[r + 4 * pos] = (byte)(temp[r + 4 * c] & 0xFF);
             }
         }
@@ -144,14 +144,14 @@ public class AESAlgorithm: ISymmetricCipher
     
     private void MixColumns(byte[] block)
     {
-        for (var i = 0; i < nb; i++)
+        for (var i = 0; i < Nb; i++)
         {
             var a3 = block[4 * i + 3];
             var a2 = block[4 * i + 2];
             var a1 = block[4 * i + 1];
             var a0 = block[4 * i];
             var poly = new GF(a3, a2, a1, a0);
-            poly = GF.Mult(poly, polynomials.MixColumnsPoly, _box.Polynomial);
+            poly = GF.Mult(poly, _polynomials.MixColumnsPoly, _box.Polynomial);
             block[4 * i + 3] = poly.a3;
             block[4 * i + 2] = poly.a2;
             block[4 * i + 1] = poly.a1;
@@ -162,14 +162,14 @@ public class AESAlgorithm: ISymmetricCipher
     
     private void InvMixColumns(byte[] block)
     {
-        for (var i = 0; i < nb; i++)
+        for (var i = 0; i < Nb; i++)
         {
             var a3 = block[4 * i + 3];
             var a2 = block[4 * i + 2];
             var a1 = block[4 * i + 1];
             var a0 = block[4 * i];
             var poly = new GF(a3, a2, a1, a0);
-            poly = GF.Mult(poly, polynomials.InvMixColumnsPoly, _box.Polynomial);
+            poly = GF.Mult(poly, _polynomials.InvMixColumnsPoly, _box.Polynomial);
             block[4 * i + 3] = poly.a3;
             block[4 * i + 2] = poly.a2;
             block[4 * i + 1] = poly.a1;
