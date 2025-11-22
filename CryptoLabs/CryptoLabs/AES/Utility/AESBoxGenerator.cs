@@ -24,7 +24,7 @@ public class AESBoxGenerator
 
         for (var i = 0; i < BoxLength; i++)
         {
-            var inverted = (i == 0) ? (byte) 0 : GF.Inverse((byte)i, Polynomial);
+            var inverted = (i == 0) ? (byte) 0 : GF.InverseFermat((byte)i, Polynomial);
             var affine = AffineTransformation(inverted);
             var value = (byte)((affine ^ XorPoly) & 0xFF);
             sBox[i] = value;
