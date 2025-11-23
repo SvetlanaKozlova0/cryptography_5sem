@@ -12,19 +12,66 @@ public class MagentaAlgorithm: ISymmetricCipher
     
     public byte[] Encrypt(byte[] inputBlock)
     {
-        throw new NotImplementedException();
+        var keys = GetKeyOrder();
+        var result = new byte[inputBlock.Length];
+        Array.Copy(inputBlock, result, inputBlock.Length);
+        foreach (byte[] key in keys)
+        {
+            result = OneRound(result, key);
+        }
+
+        return result;
     }
 
     
     public byte[] Decrypt(byte[] inputBlock)
     {
-        throw new NotImplementedException();
+        return SwapLeftRight(Encrypt(SwapLeftRight(inputBlock)));
     }
 
     
     public void SetRoundKeys(byte[][] roundKeys)
     {
         _roundKeys = roundKeys;
+    }
+
+    
+    private byte[][] GetKeyOrder()
+    {
+        return _roundKeys.Length switch
+        {
+            2 =>
+            [
+                _roundKeys[0],
+                _roundKeys[0],
+                _roundKeys[1],
+                _roundKeys[1],
+                _roundKeys[0],
+                _roundKeys[0]
+            ],
+            3 =>
+            [
+                _roundKeys[0],
+                _roundKeys[1],
+                _roundKeys[2],
+                _roundKeys[2],
+                _roundKeys[1],
+                _roundKeys[0]
+            ],
+            4 =>
+            [
+                _roundKeys[0],
+                _roundKeys[1],
+                _roundKeys[2],
+                _roundKeys[3],
+                _roundKeys[3],
+                _roundKeys[2],
+                _roundKeys[1],
+                _roundKeys[0]
+            ],
+            _ => throw new ArgumentException($"Incorrect round keys amount: " +
+                                             $"must be 2 / 3 / 4, but got {_roundKeys.Length}.")
+        };
     }
 
     
@@ -45,7 +92,7 @@ public class MagentaAlgorithm: ISymmetricCipher
     // возвращает конкатенацию A(x, y) и A(y, x)
     private byte[] FuncPe(byte x, byte y)
     {
-        byte[] concatenation = new byte[2];
+        var concatenation = new byte[2];
         concatenation[0] = FuncA(x, y);
         concatenation[1] = FuncA(y, x);
         return concatenation;
@@ -118,5 +165,26 @@ public class MagentaAlgorithm: ISymmetricCipher
         var secondHalf = BF.XorBlocks(right, copyOdd(FuncC(k - 1, x)), right.Length);
         
         return FuncT(BF.Concate(firstHalf, secondHalf));
+    }
+
+    
+    private byte[] Func3C(byte[] x)
+    {
+        return copyEven(FuncC(3, x));
+    }
+
+    
+    private byte[] OneRound(byte[] x, byte[] key)
+    {
+        var leftRight = BF.Split(x);
+        return BF.Concate(leftRight[1], BF.XorBlocks(leftRight[1],
+            Func3C(BF.Concate(leftRight[1], key)), leftRight[1].Length));
+    }
+
+    
+    private static byte[] SwapLeftRight(byte[] block)
+    {
+        var leftRight = BF.Split(block);
+        return BF.Concate(leftRight[1], leftRight[0]);
     }
 }
