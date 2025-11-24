@@ -1,5 +1,5 @@
 namespace CryptoLabs.AES.Utility;
-using GF = CryptoLabs.Utility.MathUtils.GaloisFieldArithmetic;
+using GF = CryptoLabs.Utility.MathUtils.GaloisFieldArithmeticNoValidation;
 
 public class AESRconGenerator(in int nb, in int nr, in byte polynomial)
 {

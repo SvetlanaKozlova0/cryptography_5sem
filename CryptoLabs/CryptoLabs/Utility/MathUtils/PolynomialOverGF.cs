@@ -1,5 +1,5 @@
 namespace CryptoLabs.Utility.MathUtils;
-using GF = GaloisFieldArithmetic;
+using GF = GaloisFieldArithmeticNoValidation;
 
 public class PolynomialOverGF(byte a3, byte a2, byte a1, byte a0)
 {
