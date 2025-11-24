@@ -104,12 +104,19 @@ public static class GaloisFieldArithmetic
     }
 }
 
+
 public static class GaloisFieldArithmeticNoValidation
 {
     private const byte MaskOldest = 0x80;
     private const byte MaskYoungest = 0x01;
     private const int ByteLength = 8;
 
+    public static byte Add(byte a, byte b)
+    {
+        return (byte)(a ^ b);
+    }
+    
+    
     public static byte OneMult(byte a, byte mod)
     {
         if ((a & MaskOldest) == MaskOldest)
