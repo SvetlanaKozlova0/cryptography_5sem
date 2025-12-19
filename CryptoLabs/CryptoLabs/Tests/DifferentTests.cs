@@ -1,5 +1,7 @@
 namespace CryptoLabs.Tests;
 using System.Numerics;
+using CryptoLabs.Utility.MathUtils;
+using CryptoLabs.RSA.AttacksOnRSA;
 
 public class DifferentTests
 {
@@ -263,5 +265,58 @@ public class DifferentTests
         {
             Console.WriteLine("Wrong answer.");
         }
+    }
+    
+    
+    public static void TestWienerAttack()
+    {
+        BigInteger p = 10007;
+        BigInteger q = 10009;
+
+        var n = p * q;
+        var phi = (p - 1) * (q - 1);
+
+        BigInteger d = 29;
+
+        if (NumberTheoryFunctions.EuclideanAlgorithm(d, phi) != 1)
+            throw new Exception("Chosen d is not coprime with phi. Pick another d.");
+
+        NumberTheoryFunctions.BezoutIdentity(d, phi, out var x, out _);
+        var e = x % phi;
+        
+        if (e < 0)
+        {
+            e += phi;
+        }
+
+        Console.WriteLine($"p = {p}, q = {q}");
+        Console.WriteLine($"n = {n}");
+        Console.WriteLine($"phi = {phi}");
+        Console.WriteLine($"d (real) = {d}");
+        Console.WriteLine($"e = {e}");
+        Console.WriteLine();
+
+        var (recoveredD, recoveredPhi, steps) = WienerAttack.Attack(e, n);
+
+        Console.WriteLine($"d (recovered) = {recoveredD}");
+        Console.WriteLine($"phi (recovered) = {recoveredPhi}");
+        Console.WriteLine($"steps number = {steps.Count}");
+        Console.WriteLine();
+
+        var dRecoveredRight = recoveredD == d;
+        var phiRecoveredRight = recoveredPhi == phi;
+
+        var result = ((e * recoveredD - 1) % recoveredPhi) == 0;
+        
+        Console.WriteLine($"d equal: {dRecoveredRight}");
+        Console.WriteLine($"phi equal: {phiRecoveredRight}");
+        Console.WriteLine($"(e * d - 1) % phi == 0 : {result}");
+        Console.WriteLine();
+
+        if (!dRecoveredRight || !phiRecoveredRight || !result)
+        {
+            throw new Exception("Wiener attack test failed.");
+        }
+        Console.WriteLine("Wiener attack successful.");
     }
 }
