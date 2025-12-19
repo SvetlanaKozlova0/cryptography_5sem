@@ -11,6 +11,7 @@ public class SymmetricCryptoContext
     private readonly IPadding _padding;
     private readonly byte[] _iv;
     private readonly object[] _parameters;
+    private readonly IFileCipherMode _fileCipherMode;
 
     public SymmetricCryptoContext(byte[] key,
         ISymmetricCipher cipher,
@@ -27,6 +28,7 @@ public class SymmetricCryptoContext
         _parameters = args;
         byte[][] roundKeys = expander.GenerateRoundKeys(key);
         _symmetricCipher.SetRoundKeys(roundKeys);
+        _fileCipherMode = FileCipherModeFactory.Create(mode);
     }
 
     public void EncryptSync(byte[] input, ref byte[] output)
@@ -56,34 +58,24 @@ public class SymmetricCryptoContext
         byte[] unpadded = _padding.RemovePadding(decrypted, _cipherMode.BlockSize);
         return unpadded;
     }
-
-    public void EncryptAsync(byte[] input, ref byte[] output)
+    
+    public void EncryptFile(string input, string output)
     {
-        throw new NotImplementedException();
+        _fileCipherMode.Encrypt(_symmetricCipher, _padding, input, output, _iv);
     }
 
-    public void DecryptAsync(byte[] input, ref byte[] output)
+    public void DecryptFile(string input, string output)
     {
-        throw new NotImplementedException();
+        _fileCipherMode.Decrypt(_symmetricCipher, _padding, input, output, _iv);
     }
 
-    public void EncryptSync(string inputFile, string outputFile)
+    public async Task EncryptFileAsync(string input, string output)
     {
-        throw new NotImplementedException();
+        await _fileCipherMode.EncryptAsync(_symmetricCipher, _padding, input, output, _iv);
     }
 
-    public void DecryptSync(string inputFile, string outputFile)
+    public async Task DecryptFileAsync(string input, string output)
     {
-        throw new NotImplementedException();
-    }
-
-    public void EncryptAsync(string inputFile, string outputFile)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void DecryptAsync(string inputFile, string outputFile)
-    {
-        throw new NotImplementedException();
+        await _fileCipherMode.DecryptAsync(_symmetricCipher, _padding, input, output, _iv);
     }
 }
