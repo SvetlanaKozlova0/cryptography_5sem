@@ -19,7 +19,11 @@ public class AESAlgorithm: ISymmetricCipher
     {
         _box = aesBoxGenerator;
     }
-    
+
+    public int GetBlockSize()
+    {
+        return 16;
+    }
     
     public byte[] Encrypt(byte[] inputBlock)
     {

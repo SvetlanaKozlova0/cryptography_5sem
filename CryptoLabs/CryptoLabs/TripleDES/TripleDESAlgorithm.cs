@@ -22,6 +22,11 @@ public class TripleDESAlgorithm: ISymmetricCipher
                 _des2 = new DESAlgorithm(dummy);
                 _des3 = new DESAlgorithm(dummy);
         }
+
+        public int GetBlockSize()
+        {
+                return 8;
+        }
         
         public byte[] Encrypt(byte[] inputBlock)
         {

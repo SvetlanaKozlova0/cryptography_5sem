@@ -6,6 +6,11 @@ public class DealAlgorithm: ISymmetricCipher
 {
     private byte[][] _roundKeys;
     private readonly DealEncryptionRound _encryptionRound = new();
+
+    public int GetBlockSize()
+    {
+        return 16;
+    }
     
     public byte[] Encrypt(byte[] inputBlock)
     {
