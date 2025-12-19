@@ -19,9 +19,8 @@ public class RSACipherService(
     
     private static readonly BigInteger[] CommonExponents = [65537, 17, 3, 257];
     
-    
     private readonly RSAKeyGenerator _keyGenerator = new RSAKeyGenerator(testType, minProbability, bitLength);
-    
+
 
     public byte[] Encrypt(byte[] input, RSAPublicKey key)
     {
@@ -50,7 +49,98 @@ public class RSACipherService(
         var output = result.ToByteArray(isUnsigned: true);
         return output;
     }
+    
+    public async Task EncryptFileAsync(
+        string inputPath,
+        string outputPath,
+        RSAPublicKey publicKey,
+        CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(inputPath))
+        {
+            throw new FileNotFoundException(inputPath);
+        }
 
+        var keySizeBytes = publicKey.N.GetByteCount();
+        var plainBlockSize = keySizeBytes - 1;
+
+        var buffer = new byte[plainBlockSize];
+
+        await using var input = new FileStream(
+            inputPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+
+        await using var output = new FileStream(
+            outputPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+
+        var originalLength = input.Length;
+        await output.WriteAsync(BitConverter.GetBytes(originalLength), cancellationToken);
+
+        int read;
+        while ((read = await input.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+        {
+            
+            var current = new byte[plainBlockSize];
+            Array.Copy(buffer, current, read);
+
+            var encrypted = Encrypt(current, publicKey);
+
+            var correctCipher = new byte[keySizeBytes];
+            
+            Array.Copy(encrypted, correctCipher, Math.Min(encrypted.Length, keySizeBytes));
+
+            await output.WriteAsync(correctCipher, cancellationToken);
+        }
+    }
+    
+    
+    public async Task DecryptFileAsync(
+        string inputPath,
+        string outputPath,
+        RSAPrivateKey privateKey,
+        CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(inputPath))
+        {
+            throw new FileNotFoundException(inputPath);
+        }
+
+        var keySizeBytes = privateKey.N.GetByteCount();
+        var plainBlockSize = keySizeBytes - 1;
+
+        var buffer = new byte[keySizeBytes];
+
+        await using var input = new FileStream(
+            inputPath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+
+        await using var output = new FileStream(
+            outputPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+
+        var bufferSize = new byte[8];
+        await input.ReadAsync(bufferSize, cancellationToken);
+        var remaining = BitConverter.ToInt64(bufferSize);
+
+        while (remaining > 0)
+        {
+            var read = await input.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
+            
+            if (read != buffer.Length)
+            {
+                throw new InvalidDataException("Corrupted encrypted file");
+            }
+
+            var decrypted = Decrypt(buffer, privateKey);
+
+            var correctPlain = new byte[plainBlockSize];
+            Array.Copy(decrypted, correctPlain, Math.Min(decrypted.Length, plainBlockSize));
+
+            var toWrite = (int)Math.Min(remaining, plainBlockSize);
+            await output.WriteAsync(correctPlain, 0, toWrite, cancellationToken);
+
+            remaining -= toWrite;
+        }
+    }
+    
+    
     public RSAKeyPair GenerateKeyPair()
     {
         return _keyGenerator.GenerateRSAKeyPair();
@@ -68,7 +158,8 @@ public class RSACipherService(
                 p = GenerateRandomPrimeNumber();
                 q = GenerateRandomPrimeNumber();
                 
-            } while (p == q);
+                
+            } while (p == q || BigInteger.Abs(p - q) < (BigInteger.One << (bitLength / 2 - 100)));
 
             var n = p * q;
             var phi = (p - 1) * (q - 1);
@@ -167,6 +258,7 @@ public class RSACipherService(
             var mask = (BigInteger.One << bitLength) - 1;
             return result & mask;
         }
+        
         
         private int GetMaxIterations()
         {
