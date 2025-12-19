@@ -1,3 +1,4 @@
+using CryptoLabs.Magenta.Utility;
 using CryptoLabs.Utility.Interfaces;
 
 namespace CryptoLabs.Magenta;
@@ -8,18 +9,27 @@ public class MagentaAlgorithm: ISymmetricCipher
 {
     private byte[][] _roundKeys;
     private byte[] _sBox; // необходимо инициализировать
-    
+
+    public int GetBlockSize()
+    {
+        return 16;
+    }
+
+    public MagentaAlgorithm(MagentaBoxGenerator boxGenerator)
+    {
+        _sBox = boxGenerator.SBox();
+    }
     
     public byte[] Encrypt(byte[] inputBlock)
     {
         var keys = GetKeyOrder();
         var result = new byte[inputBlock.Length];
         Array.Copy(inputBlock, result, inputBlock.Length);
+        
         foreach (byte[] key in keys)
         {
             result = OneRound(result, key);
         }
-
         return result;
     }
 
@@ -177,8 +187,13 @@ public class MagentaAlgorithm: ISymmetricCipher
     private byte[] OneRound(byte[] x, byte[] key)
     {
         var leftRight = BF.Split(x);
-        return BF.Concate(leftRight[1], BF.XorBlocks(leftRight[1],
-            Func3C(BF.Concate(leftRight[1], key)), leftRight[1].Length));
+        var left = leftRight[0];  
+        var right = leftRight[1]; 
+
+        var fOutput = Func3C(BF.Concate(right, key)); 
+        var newRight = BF.XorBlocks(left, fOutput, left.Length); 
+
+        return BF.Concate(right, newRight);
     }
 
     

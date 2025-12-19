@@ -29,6 +29,11 @@ public class DESAlgorithm(byte[][] roundKeys): ISymmetricCipher
     private byte[][] _roundKeys = roundKeys;
     private readonly IEncryptionRound _feistelNetwork = new FeistelNetwork();
 
+    public int GetBlockSize()
+    {
+        return 8;
+    }
+    
     public byte[] Encrypt(byte[] inputBlock)
     {
         ValidateInputBlock(inputBlock);
