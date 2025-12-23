@@ -1,7 +1,7 @@
 namespace CryptoLabs.AES.Utility;
 using GF = CryptoLabs.Utility.MathUtils.GaloisFieldArithmeticNoValidation;
 
-public class AESBoxGenerator
+public class RijndaelBoxGenerator
 {
     private const int BoxLength = 256;
     private const byte XorPoly = 0x63;
@@ -11,7 +11,7 @@ public class AESBoxGenerator
     private byte[] _invBox;
     
     
-    public AESBoxGenerator(byte poly)
+    public RijndaelBoxGenerator(byte poly)
     {
         Polynomial = poly;
     }

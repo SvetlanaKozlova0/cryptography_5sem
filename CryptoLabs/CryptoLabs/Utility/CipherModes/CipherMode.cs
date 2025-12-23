@@ -373,7 +373,7 @@ public class CTRMode : ICipherMode
     public int BlockSize => 8;
 }
 
-//need to think about design to keep deltas
+
 public class RandomDeltaMode : ICipherMode
 {
     private readonly Random _random = new Random();

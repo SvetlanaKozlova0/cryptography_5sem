@@ -6,18 +6,24 @@ namespace CryptoLabs.Tests;
 using CryptoLabs.AES.Utility;
 using AES;
 
-public class AESBasicTests
+public class RijndaelBasicTests
 {
     public static void RunTests()
     {
-        TestJPGFile();
+        BasicTest();
+        Test_AllOnes();
+        Test_AllZeros();
+        Test_Checkerboard();
+        Test_192();
+        Test_256();
+        //TestJPGFile();
     }
     
     public static void BasicTest()
     {
-        var boxGenerator = new AESBoxGenerator(0x1b);
-        var aes = new AESAlgorithm(boxGenerator);
-        var keyExpander = new AESKeyExpander(boxGenerator);
+        var boxGenerator = new RijndaelBoxGenerator(0x1b);
+        var aes = new RijndaelAlgorithm(boxGenerator);
+        var keyExpander = new RijndaelKeyExpander(boxGenerator);
         byte[] key = [
             0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
             0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c
@@ -38,9 +44,9 @@ public class AESBasicTests
     
     public static void Test_AllZeros()
     {
-        var boxGenerator = new AESBoxGenerator(0x1b);
-        var aes = new AESAlgorithm(boxGenerator);
-        var keyExpander = new AESKeyExpander(boxGenerator);
+        var boxGenerator = new RijndaelBoxGenerator(0x1b);
+        var aes = new RijndaelAlgorithm(boxGenerator);
+        var keyExpander = new RijndaelKeyExpander(boxGenerator);
     
         var key = new byte[16]; 
         var plaintext = new byte[16]; 
@@ -55,9 +61,9 @@ public class AESBasicTests
     
     public static void Test_AllOnes()
     {
-        var boxGenerator = new AESBoxGenerator(0x1b);
-        var aes = new AESAlgorithm(boxGenerator);
-        var keyExpander = new AESKeyExpander(boxGenerator);
+        var boxGenerator = new RijndaelBoxGenerator(0x1b);
+        var aes = new RijndaelAlgorithm(boxGenerator);
+        var keyExpander = new RijndaelKeyExpander(boxGenerator);
     
         var key = Enumerable.Repeat((byte)0xFF, 16).ToArray();
         var plaintext = Enumerable.Repeat((byte)0xFF, 16).ToArray();
@@ -72,9 +78,9 @@ public class AESBasicTests
     
     public static void Test_Checkerboard()
     {
-        var boxGenerator = new AESBoxGenerator(0x1b);
-        var aes = new AESAlgorithm(boxGenerator);
-        var keyExpander = new AESKeyExpander(boxGenerator);
+        var boxGenerator = new RijndaelBoxGenerator(0x1b);
+        var aes = new RijndaelAlgorithm(boxGenerator);
+        var keyExpander = new RijndaelKeyExpander(boxGenerator);
     
         byte[] key = [0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 
             0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55, 0xAA, 0x55];
@@ -91,9 +97,9 @@ public class AESBasicTests
     
     public static void Test_192()
     {
-        var boxGenerator = new AESBoxGenerator(0x1b);
-        var aes = new AESAlgorithm(boxGenerator);
-        var keyExpander = new AESKeyExpander(boxGenerator);
+        var boxGenerator = new RijndaelBoxGenerator(0x1b);
+        var aes = new RijndaelAlgorithm(boxGenerator);
+        var keyExpander = new RijndaelKeyExpander(boxGenerator);
     
         byte[] key = [
             0x8e, 0x73, 0xb0, 0xf7, 0xda, 0x0e, 0x64, 0x52,
@@ -116,9 +122,9 @@ public class AESBasicTests
     
     public static void Test_256()
     {
-        var boxGenerator = new AESBoxGenerator(0x1b);
-        var aes = new AESAlgorithm(boxGenerator);
-        var keyExpander = new AESKeyExpander(boxGenerator);
+        var boxGenerator = new RijndaelBoxGenerator(0x1b);
+        var aes = new RijndaelAlgorithm(boxGenerator);
+        var keyExpander = new RijndaelKeyExpander(boxGenerator);
     
         byte[] key = [
             0x60, 0x3d, 0xeb, 0x10, 0x15, 0xca, 0x71, 0xbe,
@@ -154,9 +160,9 @@ public class AESBasicTests
             0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c
         ];
         
-        var boxGenerator = new AESBoxGenerator(0x1b);
-        var aes = new AESAlgorithm(boxGenerator);
-        var keyExpander = new AESKeyExpander(boxGenerator);
+        var boxGenerator = new RijndaelBoxGenerator(0x1b);
+        var aes = new RijndaelAlgorithm(boxGenerator);
+        var keyExpander = new RijndaelKeyExpander(boxGenerator);
 
         var context = new SymmetricCryptoContext(key, aes, CipherMode.CTR, PaddingMode.PKCS7, keyExpander, iv);
         context.EncryptFile(TestFilePaths.text_input, TestFilePaths.text_encrypted);
@@ -178,9 +184,9 @@ public class AESBasicTests
             0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c
         ];
         
-        var boxGenerator = new AESBoxGenerator(0x1b);
-        var aes = new AESAlgorithm(boxGenerator);
-        var keyExpander = new AESKeyExpander(boxGenerator);
+        var boxGenerator = new RijndaelBoxGenerator(0x1b);
+        var aes = new RijndaelAlgorithm(boxGenerator);
+        var keyExpander = new RijndaelKeyExpander(boxGenerator);
 
         var context = new SymmetricCryptoContext(key, aes, CipherMode.RandomDelta, PaddingMode.PKCS7, keyExpander, iv);
         context.EncryptFile(TestFilePaths.mountain_input, TestFilePaths.mountain_encrypted);

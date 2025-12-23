@@ -6,31 +6,32 @@ using GF = CryptoLabs.Utility.MathUtils.PolynomialOverGF;
 
 namespace CryptoLabs.AES;
 
-public class AESAlgorithm: ISymmetricCipher
+public class RijndaelAlgorithm: ISymmetricCipher
 {
-    private const int Nb = 4;
+    private readonly int _nb;
     private byte[][] _roundKeys;
     
-    private readonly AESBoxGenerator _box;
-    private readonly AESPoly _polynomials = new();
+    private readonly RijndaelBoxGenerator _box;
+    private readonly RijndaelPoly _polynomials = new();
     
 
-    public AESAlgorithm(AESBoxGenerator aesBoxGenerator)
+    public RijndaelAlgorithm(RijndaelBoxGenerator aesBoxGenerator, int nb = 4)
     {
         _box = aesBoxGenerator;
+        if (nb != 4 && nb != 6 && nb != 8)
+            throw new ArgumentException("Nb must be 4, 6 or 8.");
+        _nb = nb;
     }
 
-    public int GetBlockSize()
-    {
-        return 16;
-    }
+
+    public int GetBlockSize() => 4 * _nb;
+
     
     public byte[] Encrypt(byte[] inputBlock)
     {
-        if (inputBlock.Length != 16)
-        {
-            throw new ArgumentException("Input block length must be 16 bytes.");
-        }
+        if (inputBlock.Length != GetBlockSize())
+            throw new ArgumentException($"Input block length must be {GetBlockSize()} bytes.");
+
         byte[] state = new byte[inputBlock.Length];
         Array.Copy(inputBlock, state, state.Length);
         AddRoundKey(state, _roundKeys[0]);
@@ -118,29 +119,38 @@ public class AESAlgorithm: ISymmetricCipher
 
     private void ShiftRows(byte[] block)
     {
-        byte[] temp = new byte[block.Length];
-        Array.Copy(block, temp, block.Length);
-        for (var r = 1; r < 4; r++)
+        var temp = (byte[])block.Clone();
+        var shifts = GetShiftOffsets();
+
+        for (int r = 1; r < 4; r++)
         {
-            for (var c = 0; c < Nb; c++)
+            int shift = shifts[r];
+            for (int c = 0; c < _nb; c++)
             {
-                var pos = (c - r + Nb) % Nb;
-                block[r + 4 * pos] = (byte)(temp[r + 4 * c] & 0xFF);
+                int src = r + 4 * c;
+                int dstCol = (c - shift + _nb) % _nb;
+                int dst = r + 4 * dstCol;
+                block[dst] = temp[src];
             }
         }
     }
 
+
     
     private void InvShiftRows(byte[] block)
     {
-        byte[] temp = new byte[block.Length];
-        Array.Copy(block, temp, block.Length);
-        for (var r = 1; r < 4; r++)
+        var temp = (byte[])block.Clone();
+        var shifts = GetShiftOffsets();
+
+        for (int r = 1; r < 4; r++)
         {
-            for (var c = 0; c < Nb; c++)
+            int shift = shifts[r];
+            for (int c = 0; c < _nb; c++)
             {
-                var pos = (c + r) % Nb;
-                block[r + 4 * pos] = (byte)(temp[r + 4 * c] & 0xFF);
+                int src = r + 4 * c;
+                int dstCol = (c + shift) % _nb;
+                int dst = r + 4 * dstCol;
+                block[dst] = temp[src];
             }
         }
     }
@@ -148,7 +158,7 @@ public class AESAlgorithm: ISymmetricCipher
     
     private void MixColumns(byte[] block)
     {
-        for (var i = 0; i < Nb; i++)
+        for (var i = 0; i < _nb; i++)
         {
             var a3 = block[4 * i + 3];
             var a2 = block[4 * i + 2];
@@ -166,7 +176,7 @@ public class AESAlgorithm: ISymmetricCipher
     
     private void InvMixColumns(byte[] block)
     {
-        for (var i = 0; i < Nb; i++)
+        for (var i = 0; i < _nb; i++)
         {
             var a3 = block[4 * i + 3];
             var a2 = block[4 * i + 2];
@@ -179,5 +189,16 @@ public class AESAlgorithm: ISymmetricCipher
             block[4 * i + 1] = poly.a1;
             block[4 * i] = poly.a0;
         }
+    }
+    
+    private int[] GetShiftOffsets()
+    {
+        return _nb switch
+        {
+            4 => new[] { 0, 1, 2, 3 },
+            6 => new[] { 0, 1, 2, 3 }, 
+            8 => new[] { 0, 1, 3, 4 }, 
+            _ => throw new ArgumentException("Nb must be 4, 6 or 8.")
+        };
     }
 }

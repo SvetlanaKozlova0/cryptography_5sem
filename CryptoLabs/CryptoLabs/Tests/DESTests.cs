@@ -454,7 +454,7 @@ public class DESTests
         byte[] iv = [0x12, 0x34, 0x12, 0x78, 0x89, 0xFF, 0x45, 0x32];
         var expander = new DESKeyExpander();
         var alg = new DESAlgorithm(expander.GenerateRoundKeys(key));
-        var context = new SymmetricCryptoContext(key, alg, CipherMode.CTR, PaddingMode.PKCS7, expander, iv);
+        var context = new SymmetricCryptoContext(key, alg, CipherMode.RandomDelta, PaddingMode.PKCS7, expander, iv);
         await context.EncryptFileAsync(TestFilePaths.mountain_input, TestFilePaths.mountain_encrypted);
         await context.DecryptFileAsync(TestFilePaths.mountain_encrypted, TestFilePaths.mountain_output);
     }
@@ -465,7 +465,7 @@ public class DESTests
         byte[] iv = [0x12, 0x34, 0x12, 0x78, 0x89, 0xFF, 0x45, 0x32];
         var expander = new DESKeyExpander();
         var alg = new DESAlgorithm(expander.GenerateRoundKeys(key));
-        var context = new SymmetricCryptoContext(key, alg, CipherMode.CTR, PaddingMode.PKCS7, expander, iv);
+        var context = new SymmetricCryptoContext(key, alg, CipherMode.RandomDelta, PaddingMode.PKCS7, expander, iv);
         await context.EncryptFileAsync(TestFilePaths.text_input, TestFilePaths.text_encrypted);
         await context.DecryptFileAsync(TestFilePaths.text_encrypted, TestFilePaths.text_output);
     }

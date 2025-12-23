@@ -4,31 +4,32 @@ using CryptoLabs.AES.Parameters;
 
 namespace CryptoLabs.AES;
 
-public class AESKeyExpander: IKeyExpander
+public class RijndaelKeyExpander: IKeyExpander
 {
-    private readonly AESBoxGenerator _box;
-    private AESRconGenerator _rcon;
-    private AESSpecification _spec;
-
+    private readonly RijndaelBoxGenerator _box;
+    private RijndaelRconGenerator _rcon;
+    private RijndaelSpecification _spec;
+    private readonly int _nb;
     
-    public AESKeyExpander(AESBoxGenerator boxGenerator)
+    public RijndaelKeyExpander(RijndaelBoxGenerator boxGenerator, int nb = 4)
     {
         _box = boxGenerator;
+        if (nb != 4 && nb != 6 && nb != 8)
+            throw new ArgumentException("Nb must be 4, 6 or 8.");
+        _nb = nb;
     }
     
     
     public byte[][] GenerateRoundKeys(byte[] inputKey)
     {
-        if (inputKey.Length != 16 && inputKey.Length != 24 && inputKey.Length != 32)
-        {
-            throw new ArgumentException($"Input key for generating round keys must be 16 / 24 / 32 bytes," +
-                                        $"but got {inputKey.Length}.");
-        }
+        if (inputKey.Length < 16 || inputKey.Length > 32 || inputKey.Length % 4 != 0)
+            throw new ArgumentException($"Key must be 16..32 bytes step 4, got {inputKey.Length}.");
+
         
         var lengthKey = inputKey.Length / 4;
         
-        _spec = new AESSpecification(lengthKey);
-        _rcon = new AESRconGenerator(_spec.Nb, _spec.Nr, _box.Polynomial);
+        _spec = new RijndaelSpecification(lengthKey, _nb);
+        _rcon = new RijndaelRconGenerator(_spec.Nb, _spec.Nr, _box.Polynomial);
         
         var countWords = _spec.Nb * (_spec.Nr + 1);
         var keySize = countWords * 4;
@@ -49,7 +50,6 @@ public class AESKeyExpander: IKeyExpander
                 RotWord(temp);
                 SubWord(temp);
                 
-                // later remove this check
                 if (i / _spec.Nk < _rcon.GenerateRCon().Length)
                 {
                     BitFunctions.XorBlocks(temp, _rcon.GenerateRCon()[i / _spec.Nk], temp.Length);

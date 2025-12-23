@@ -1,7 +1,7 @@
 namespace CryptoLabs.AES.Utility;
 using GF = CryptoLabs.Utility.MathUtils.GaloisFieldArithmeticNoValidation;
 
-public class AESRconGenerator(in int nb, in int nr, in byte polynomial)
+public class RijndaelRconGenerator(in int nb, in int nr, in byte polynomial)
 {
     private readonly int _nb = nb;
     private readonly int _nr = nr;
